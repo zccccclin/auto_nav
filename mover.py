@@ -5,14 +5,15 @@ from geometry_msgs.msg import Twist
 
 
 def mover():
+    # initialize node
+    rospy.init_node('mover', anonymous=True)
+
     # create Twist object
     twist = Twist()
 
     # set up Publisher to cmd_vel topic
     pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
-    # initialize node
-    rospy.init_node('mover', anonymous=True)
     # set the update rate
     rate = rospy.Rate(10) # 10 Hz
 
