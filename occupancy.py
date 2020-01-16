@@ -33,7 +33,6 @@ def callback(msg):
     # show the image
     plt.imshow(img,cmap='gray')
     plt.draw_all()
-    rospy.sleep(1.0)
     # pause to make sure the plot gets created
     plt.pause(0.00000000001)
 
