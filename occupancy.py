@@ -9,7 +9,7 @@ from PIL import Image
 # constants
 occ_bins = [-1, 0, 100, 101]
 
-def callback(msg, tfBuffer):
+def callback(msg):
     # create numpy array
     occdata = np.array([msg.data])
     # occdata is -1 (unexplored), 0 (occupied), or value between 0 and 100 (probability occupied)
@@ -20,7 +20,7 @@ def callback(msg, tfBuffer):
     # log the info
     rospy.loginfo('Unmapped: %i Unoccupied: %i Occupied: %i Total: %i', occ_counts[0][0], occ_counts[0][1], occ_counts[0][2], total_bins)
 
-    # make occdata go from 0 to 2 so we can use uint8, which won't be possible if we have 
+    # make occdata go from 0 to 2 so we can use uint8, which won't be possible if we have
     # negative values
     # first make negative values 0
     occ2 = occdata + 1
@@ -31,7 +31,7 @@ def callback(msg, tfBuffer):
     # create an Image using PIL
     img = Image.fromarray(np.flipud(odata))
     # show the image
-    plt.imshow(img)
+    plt.imshow(img,cmap='gray')
     plt.draw_all()
     rospy.sleep(1.0)
     # pause to make sure the plot gets created
@@ -43,7 +43,7 @@ def occupancy():
     rospy.init_node('occupancy', anonymous=True)
 
     # subscribe to map occupancy data
-    rospy.Subscriber('map', OccupancyGrid, callback, tfBuffer)
+    rospy.Subscriber('map', OccupancyGrid, callback)
 
     # create matplotlib figure
     plt.ion()
