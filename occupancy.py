@@ -26,11 +26,11 @@ def callback(msg):
     occ2 = occdata + 1
     # now change all the values above 1 to 2
     occ3 = (occ2>1).choose(occ2,2)
-    # convert into 2D image
+    # convert into 2D array using column order
     odata = np.uint8(occ3.reshape(msg.info.width,msg.info.height,order='F'))
-    # create an Image using PIL
+    # create image from 2D array using PIL
     img = Image.fromarray(odata)
-    # show the image
+    # show the image using grayscale map
     plt.imshow(img,cmap='gray')
     plt.draw_all()
     # pause to make sure the plot gets created
