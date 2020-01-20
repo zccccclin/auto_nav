@@ -27,9 +27,9 @@ def callback(msg):
     # now change all the values above 1 to 2
     occ3 = (occ2>1).choose(occ2,2)
     # convert into 2D image
-    odata = np.uint8(occ3.reshape(msg.info.width,msg.info.height))
+    odata = np.uint8(occ3.reshape(msg.info.width,msg.info.height,order='F'))
     # create an Image using PIL
-    img = Image.fromarray(np.flipud(odata))
+    img = Image.fromarray(odata)
     # show the image
     plt.imshow(img,cmap='gray')
     plt.draw_all()
