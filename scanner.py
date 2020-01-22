@@ -23,7 +23,7 @@ def scanner():
 	rospy.init_node('scanner', anonymous=True)
 
 	# set the update rate to 1 Hz
-	rate = rospy.Rate(1) # 1 Hz
+	rate = rospy.Rate(5) # 1 Hz
 
 	# subscribe to LaserScan data
 	rospy.Subscriber('scan', LaserScan, callback)
