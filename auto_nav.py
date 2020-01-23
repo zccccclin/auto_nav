@@ -14,8 +14,8 @@ import time
 laser_range = np.array([])
 occdata = []
 yaw = 0.0
-rotate_speed = 0.1
-linear_speed = 0.01
+rotate_speed = 1.1
+linear_speed = 1.01
 stop_distance = 0.25
 occ_bins = [-1, 0, 100, 101]
 front_angle = 30
