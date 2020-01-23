@@ -29,20 +29,20 @@ def mover():
 	    twist.angular.z = 0.0
     	elif cmd_char == 'w':
             # move forward
-	    twist.linear.x = 0.1
+	    twist.linear.x = 0.5
 	    twist.angular.z = 0.0
     	elif cmd_char == 'x':
             # move backward
-	    twist.linear.x = -0.1
+	    twist.linear.x = -0.5
 	    twist.angular.z = 0.0
     	elif cmd_char == 'a':
             # turn counter-clockwise
 	    twist.linear.x = 0.0
-	    twist.angular.z = 1.0
+	    twist.angular.z = 3.0
     	elif cmd_char == 'd':
             # turn clockwise
 	    twist.linear.x = 0.0
-	    twist.angular.z = -1.0
+	    twist.angular.z = -3.0
 
 	# publish twist to move the TurtleBot
 	pub.publish(twist)
