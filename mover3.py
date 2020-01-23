@@ -9,7 +9,7 @@ import cmath
 import numpy as np
 
 # constants
-rotate_speed = 0.1
+rotate_speed = 0.5
 linear_speed = 0.1
 
 # global variables
