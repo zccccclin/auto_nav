@@ -4,6 +4,7 @@ Spyder Editor
 
 This is a temporary script file.
 """
+import re
 
 istr = str(raw_input('Keys:'))
 if istr.isnumeric()
