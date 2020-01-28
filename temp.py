@@ -5,6 +5,18 @@ Spyder Editor
 This is a temporary script file.
 """
 import re
+import numpy as np
+f = open('lidar.txt')
+line = f.readlines()[13]
+f.close()
+laser_range = np.array(re.findall('\d+.\d*',line))
+
+f = open('map.txt')
+line = f.readlines()[23]
+f.close()
+occdata = np.array(re.findall('-?\d+.\d*',line))
+
+
 
 istr = str(raw_input('Keys:'))
 if istr.isnumeric()
