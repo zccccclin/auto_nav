@@ -18,7 +18,7 @@ rotate_speed = 0.5
 linear_speed = 0.5
 stop_distance = 5.00
 occ_bins = [-1, 0, 100, 101]
-front_angle = 45
+front_angle = 30
 front_angles = range(-front_angle,front_angle+1,1)
 
 
