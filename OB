@@ -1,0 +1,30 @@
+[1mdiff --git a/occupancy.py b/occupancy.py[m
+[1mindex d7a8ed8..a42d2a5 100755[m
+[1m--- a/occupancy.py[m
+[1m+++ b/occupancy.py[m
+[36m@@ -1,4 +1,4 @@[m
+[31m-#git!/usr/bin/env python[m
+[32m+[m[32m#!/usr/bin/env python[m
+ [m
+ import rospy[m
+ import numpy as np[m
+[36m@@ -34,7 +34,7 @@[m [mdef callback(msg):[m
+     plt.imshow(img,cmap='gray')[m
+     plt.draw_all()[m
+     # pause to make sure the plot gets created[m
+[31m-    plt.pause(0.1)[m
+[32m+[m[32m    plt.pause(0.00000000001)[m
+ [m
+ [m
+ def occupancy():[m
+[1mdiff --git a/occupancy2.py b/occupancy2.py[m
+[1mindex d655075..54e8141 100755[m
+[1m--- a/occupancy2.py[m
+[1m+++ b/occupancy2.py[m
+[36m@@ -77,4 +77,4 @@[m [mif __name__ == '__main__':[m
+     try:[m
+         occupancy()[m
+     except  rospy.ROSInterruptException:[m
+[31m-        pass[m
+[32m+[m[32m        pass[m
+\ No newline at end of file[m
