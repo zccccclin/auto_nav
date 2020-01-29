@@ -1,4 +1,4 @@
-#git!/usr/bin/env python
+#!/usr/bin/env python
 
 import rospy
 import numpy as np
@@ -34,7 +34,7 @@ def callback(msg):
     plt.imshow(img,cmap='gray')
     plt.draw_all()
     # pause to make sure the plot gets created
-    plt.pause(0.1)
+    plt.pause(0.00000000001)
 
 
 def occupancy():
