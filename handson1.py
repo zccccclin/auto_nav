@@ -11,7 +11,7 @@ import RPi.GPIO as GPIO
 
 GPIO.setmode(GPIO.BOARD)
 
-test_point = 1
+test_point = 40
 
 GPIO.setup(test_point,GPIO.OUT)
 
