@@ -14,10 +14,8 @@ occ_bins = [-1, 0, 100, 101]
 # create global variables
 rotated = Image.fromarray(np.array(np.zeros((1,1))))
 
-
 def callback(msg, tfBuffer):
     global rotated
-
     # create numpy array
     occdata = np.array([msg.data])
     # compute histogram to identify percent of bins with -1
@@ -33,6 +31,9 @@ def callback(msg, tfBuffer):
     trans = tfBuffer.lookup_transform('base_link', 'map', rospy.Time(0))
     rospy.loginfo(['Trans: ' + str(trans.transform.translation)])
     rospy.loginfo(['Rot: ' + str(trans.transform.rotation)])
+    rospy.loginfo(['X coord: ' + str(((trans.transform.translation.x - msg.info.origin.position.x) / msg.info.resolution))])
+    rospy.loginfo(['Y coord: ' + str(((trans.transform.translation.y - msg.info.origin.position.y) / msg.info.resolution))])
+
     # convert quaternion to Euler angles
     orientation_list = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
     (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
@@ -46,6 +47,7 @@ def callback(msg, tfBuffer):
     odata = np.uint8(oc3.reshape(msg.info.width,msg.info.height,order='F'))
     # create image from 2D array using PIL
     img = Image.fromarray(odata)
+    img = img.transform(img.size, Image.AFFINE, (1, 0, -((msg.info.width/2 + 8) - (((trans.transform.translation.x -msg.info.origin.position.x) / msg.info.resolution))), 0, 1,- ((msg.info.height/2 + 8) - (((trans.transform.translation.y - msg.info.origin.position.y) / msg.info.resolution)))))
     # rotate by 180 degrees to invert map so that the forward direction is at the top of the image
     rotated = img.rotate(np.degrees(yaw)+180)
     # show image using grayscale map
