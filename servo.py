@@ -2,7 +2,7 @@ import time
 import RPi.GPIO as GPIO
 
 GPIO.setmode(GPIO.BOARD)
-servo_pin=36
+servo_pin=2
 GPIO.setup(servo_pin,GPIO.OUT)
 p=GPIO.PWM(servo_pin,50)
 p.start(7.5)
