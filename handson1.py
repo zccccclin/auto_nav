@@ -9,9 +9,9 @@ Created on Tue Feb  4 17:43:19 2020
 import time
 import RPi.GPIO as GPIO
 
-GPIO.setmode(GPIO.BCM)
+GPIO.setmode(GPIO.BOARD)
 
-test_point = 
+test_point = 40
 
 GPIO.setup(test_point,GPIO.OUT)
 
