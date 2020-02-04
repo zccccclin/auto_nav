@@ -15,10 +15,10 @@ p.start(7.5)
 #        time.sleep(1)
 #        p.ChangeDutyCycle(12.5)
 #        time.sleep(1)
-        
-#except KeyboardInterrupt:
-#   p.stop()
-#   GPIO.cleanup()
+
+except KeyboardInterrupt:
+   p.stop()
+   GPIO.cleanup()
 
 def Servo():
     val=int(input("Enter Value: "))
