@@ -9,7 +9,7 @@ p.start(7.5)
 
 def serv():
     a = int(input("Enter degree: "))
-    deg = (a/180)*12.5
+    deg = round((a/180)*10,3)+2.5
     p.ChangeDutyCycle(deg)
     time.sleep(1)
 
