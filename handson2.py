@@ -21,18 +21,9 @@ print("Start")
 for i in range(0,100,1):
     pwm.ChangeDutyCycle(i)
     print "Brightness is ",i,"%"
+    time.sleep(0.2)
 else:
     print("Finished")
     
 pwm.stop()
-GPIO.cleanup()
-
-try:
-    while True:
-        GPIO.output(test_point,GPIO.HIGH)
-        time.sleep(1)
-        GPIO.output(test_point,GPIO.LOW)
-        time.sleep(1)
-except KeyboardInterrupt:
-    GPIO.cleanup()
-    
+GPIO.cleanup()    
