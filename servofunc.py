@@ -23,5 +23,5 @@ except KeyboardInterrupt:
 def Servo():
     val=int(input("Enter Value: "))
     deg=((val/180)*12.5)
-    return p.ChangeDutyCycle(deg)
+    p.ChangeDutyCycle(deg)
 #    time.sleep(1)
