@@ -11,7 +11,7 @@ def serv1():
     a = float(input("Enter degree between 0 and 180: "))
     while a<0 or a>180:
         a = float(input("Enter degree between 0 and 180: "))
-    deg =round( a*10/180,5) + 2.5
+    deg =round(a/18) + 2.5
     p.start(deg)
     print("Rotated to "+str(a)+" degrees")
 
@@ -20,7 +20,7 @@ def serv():
     a = float(input("Enter degree between 0 and 180: "))
     while a<0 or a>180:
 	a = float(input("Enter degree between 0 and 180: "))
-    deg =round( a*10/180,5) + 2.5
+    deg =round(a/18) + 2.5
     p.ChangeDutyCycle(deg)
 #    time.sleep(1)
     print("Rotated to "+str(a)+" degrees")
