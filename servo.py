@@ -17,5 +17,11 @@ try:
         time.sleep(1)
         
 except KeyboardInterrupt:
-    p.stop()
-    GPIO.cleanup()
+   p.stop()
+   GPIO.cleanup()
+
+#def Servo():
+#    val=int(input("Enter Value: "))
+#    deg=((val/180)*12.5)
+#    return p.ChangeDutyCycle(deg)
+#    time.sleep(1)
