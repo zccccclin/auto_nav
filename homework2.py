@@ -1,60 +1,72 @@
 #!/usr/bin/env python
 
 import rospy
-import numpy as np
 from sensor_msgs.msg import LaserScan
+import numpy as np
 import time
 import RPi.GPIO as GPIO
 
-GPIO.setmode(GPIO.BOARD)
-servo = 32
-plunger = 36
-a = 2.5
+laser_range = np.array([])
+servo = 32 #servo_pin
+plunger = 36 #plunger_pin
+angle = 2.5 #45 degrees angle for servo
 
-GPIO.setup(servo, GPIO.OUT)
-GPIO.setup(plunger, GPIO.OUT)
-p=GPIO.PWM(servo,50)
-p.start(7.5)
 
-def callback(msg):
+def servo_setup(): #setup servo
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(servo, GPIO.OUT)
+    global p
+    p=GPIO.PWM(servo,50)
+    p.start(7.5)
+
+
+def get_laserscan(msg):
     global laser_range
+
+    # create numpy array
     laser_range = np.array([msg.ranges])
 
 
-def scanner():
-    global laser_range
-    global a
-	# initialize node
-    rospy.init_node('scanner', anonymous=True)
-	# set the update rate to 1 Hz
-    rate = rospy.Rate(5) # 1 Hz
-    
-        
-	# subscribe to LaserScan data
-    rospy.Subscriber('scan', LaserScan, callback)
-    while True:
-        lr2i = laser_range[0][0]
-        rospy.loginfo('The distance in front is %i ', lr2i)
-        
-        if lr2i == 1:
-            a = a*-1
-            p.ChangeDutyCycle(7.5+a)
-            time.sleep(1)
-            GPIO.output(plunger,GPIO.HIGH)
-            time.sleep(1)
-        else:
-            GPIO.output(plunger,GPIO.LOW)
-            time.sleep(1)
-    
-	# wait until it is time to run again
-	rate.sleep()
+def plunger_setup(): #setup plunger
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(plunger, GPIO.OUT)
 
-	# spin() simply keeps python from exiting until this node is stopped
-	rospy.spin()
+
+def rotation(): #function to rotate servo 45 degrees
+    global p
+    global angle
+    angle *= -1
+    p.ChangeDutyCycle(7.5+angle)
+    time.sleep(1)
+
+
+def plunger_punch(): #function to punch plunger 1 time
+    GPIO.output(plunger,GPIO.HIGH)
+    time.sleep(0.1)
+    GPIO.output(plunger,GPIO.LOW)
+    time.sleep(0.1)
+
+def trial():
+    global laser_range
+
+    rospy.init_node('trial', anonymous=True)
+    rospy.Subscriber('scan', LaserScan, get_laserscan)
+    rate = rospy.Rate(5) # 5 Hz
+
+    plunger_setup()
+    while not rospy.is_shutdown():
+        lr2 = laser_range[0]
+        lr2i = lr2[0]
+        if round(lr2i,5) == 1:
+            rotation()
+            plunger_punch()
+        rate.sleep()
+
+    rospy.spin()
 
 
 if __name__ == '__main__':
     try:
-	    scanner()
-    except  rospy.ROSInterruptException:
+        trial()
+    except rospy.ROSInterruptException:
         pass
