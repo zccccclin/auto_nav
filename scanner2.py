@@ -14,7 +14,7 @@ def callback(msg):
 	lr2i = lr2[0]
 	
 	# log the info
-    	rospy.loginfo('Shortest distance is %i degrees', lr2i)
+    	rospy.loginfo(lr2i)
 
 
 def scanner():
