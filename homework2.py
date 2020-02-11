@@ -34,7 +34,7 @@ def scanner():
 	# subscribe to LaserScan data
     rospy.Subscriber('scan', LaserScan, callback)
     while True:
-        lr2i = laser_range[0]
+        lr2i = laser_range[0][0]
         rospy.loginfo('The distance in front is %i ', lr2i)
         
         if lr2i == 1:
