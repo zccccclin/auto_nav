@@ -54,13 +54,21 @@ def trial():
     rate = rospy.Rate(5) # 5 Hz
     time.sleep(1)
 
+    servo_setup()
     plunger_setup()
+
     while not rospy.is_shutdown():
         lr2 = laser_range[0]
         lr2i = lr2[0]
-        if round(lr2i,5) == 1:
+	rospy.loginfo(round(lr2i,2))
+        if round(lr2i,2) == 1:
             rotation()
             plunger_punch()
+	    a = input('Do you wish to continue: 1 = yes, 2 = no ')
+	    if a == 1:
+		continue
+	    else:
+		break
         rate.sleep()
 
     rospy.spin()
@@ -70,4 +78,6 @@ if __name__ == '__main__':
     try:
         trial()
     except rospy.ROSInterruptException:
+	p.stop()
+        GPIO.cleanup()
         pass
