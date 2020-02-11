@@ -52,6 +52,7 @@ def trial():
     rospy.init_node('trial', anonymous=True)
     rospy.Subscriber('scan', LaserScan, get_laserscan)
     rate = rospy.Rate(5) # 5 Hz
+    time.sleep(1)
 
     plunger_setup()
     while not rospy.is_shutdown():
