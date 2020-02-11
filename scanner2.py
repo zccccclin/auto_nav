@@ -5,7 +5,7 @@ import numpy as np
 from sensor_msgs.msg import LaserScan
 
 
-def callback(msg):
+def loglidar(msg):
 	# create numpy array
 	laser_range = np.array([msg.ranges])
 	# replace 0's with nan
@@ -16,7 +16,6 @@ def callback(msg):
 	# log the info
     	rospy.loginfo(lr2i)
 
-
 def scanner():
 	# initialize node
 	rospy.init_node('scanner', anonymous=True)
@@ -25,7 +24,7 @@ def scanner():
 	rate = rospy.Rate(5) # 1 Hz
 
 	# subscribe to LaserScan data
-	rospy.Subscriber('scan', LaserScan, callback)
+	rospy.Subscriber('scan', LaserScan, loglidar)
     
 	# wait until it is time to run again
 	rate.sleep()
