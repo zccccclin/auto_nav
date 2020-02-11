@@ -8,13 +8,9 @@ from sensor_msgs.msg import LaserScan
 def loglidar(msg):
 	# create numpy array
 	laser_range = np.array([msg.ranges])
-	# replace 0's with nan
 	lr2 = laser_range
-	# find index with minimum value
-	lr2i = lr2[0][0]
-	
-	# log the info
-    	rospy.loginfo(lr2i)
+	lr2i = lr2[0][0]        
+       
 
 def scanner():
 	# initialize node
@@ -24,8 +20,9 @@ def scanner():
 	rate = rospy.Rate(5) # 1 Hz
 
 	# subscribe to LaserScan data
-	rospy.Subscriber('scan', LaserScan, loglidar)
-    
+	sub = rospy.Subscriber('scan', LaserScan, loglidar)
+        print(sub)
+        print(sub)
 	# wait until it is time to run again
 	rate.sleep()
 
