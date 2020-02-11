@@ -23,7 +23,7 @@ def callback(msg):
 	# replace 0's with nan
     lr2 = laser_range
 	# find index with minimum value
-    lr2i = lr2[0]
+    lr2i = lr2[0][0]
     rospy.loginfo('Shortest distance is %i degrees', lr2i)
     while True:
             if lr2i == 1:
