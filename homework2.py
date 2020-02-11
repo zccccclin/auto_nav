@@ -6,7 +6,6 @@ from sensor_msgs.msg import LaserScan
 import time
 import RPi.GPIO as GPIO
 
-laser_range = np.array([])
 GPIO.setmode(GPIO.BOARD)
 servo = 32
 plunger = 36
