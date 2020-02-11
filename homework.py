@@ -11,7 +11,6 @@ servo = 32 #servo_pin
 plunger = 36 #plunger_pin
 angle = 2.5 #45 degrees angle for servo
 laser_range = np.array([])
-p=GPIO.PWM(servo,50)
 
 
 
@@ -19,6 +18,7 @@ def servo_setup(): #setup servo
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(servo, GPIO.OUT)
     global p
+    p=GPIO.PWM(servo,50)
     p.start(7.5)
     
 def plunger_setup(): #setup plunger
