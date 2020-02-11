@@ -5,12 +5,18 @@ import numpy as np
 from sensor_msgs.msg import LaserScan
 
 
-def loglidar(msg):
+def callback(msg):
 	# create numpy array
 	laser_range = np.array([msg.ranges])
+	# replace 0's with nan
 	lr2 = laser_range
-	lr2i = lr2[0][0]        
-       
+	lr2[lr2==0] = np.nan
+	# find index with minimum value
+	lr2i = np.nanargmin(lr2)
+	
+	# log the info
+    	rospy.loginfo('Shortest distance is %i degrees', lr2i)
+
 
 def scanner():
 	# initialize node
@@ -20,9 +26,8 @@ def scanner():
 	rate = rospy.Rate(5) # 1 Hz
 
 	# subscribe to LaserScan data
-	sub = rospy.Subscriber('scan', LaserScan, loglidar)
-        print(sub)
-        print(sub)
+	rospy.Subscriber('scan', LaserScan, callback)
+    
 	# wait until it is time to run again
 	rate.sleep()
 
