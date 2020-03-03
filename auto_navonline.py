@@ -44,7 +44,7 @@ def alpha (distance_differ, k):
     d = distance_differ[k]
     angle = 2 * 180 / math.pi * math.atan(chord/2/d)
     return int(angle) + 1
-def motion(mod,k,distance_diffe,alpha):
+def motion(mod,k,distance_differ,alpha):
     global flag
     distance = float(distance_differ[k])
     linear = round( 0.26-0.26* math.exp(-1* (distance -0.3)) ,2)
