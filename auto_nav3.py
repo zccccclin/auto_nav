@@ -21,7 +21,7 @@ occdata = np.array([])
 yaw = 0.0
 rotate_speed = 0.22
 linear_speed = 0.22
-stop_distance = 0.5
+stop_distance = 0.2
 occ_bins = [-1, 0, 100, 101]
 front_angle = 30
 front_angles = range(-front_angle,front_angle+1,1)
@@ -203,7 +203,7 @@ def pick_direction():
     from math import sqrt, tan
     global laser_range
     line_increment = 10
-    threshold = 0.2
+    threshold = 1
 
     # publish to cmd_vel to move TurtleBot
     pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
@@ -217,47 +217,49 @@ def pick_direction():
 #Part to avoid obstacles
     def identify_openings(laser_range): #return a dict of potential openings with its distances
         opening_list = [] # will make [[30, 60], [120, 150]] (means there's an opening between angle 30 and 60, and angle 120 and 150
-	starting_angle = 0
+    	starting_angle = 0
         for angles in range(len(laser_range)):
-	    initial_distance = laser_range[0]
-	    if laser_range[angles] - initial_distance > threshold:
-		    starting_angle = angles
-	rospy.loginfo('STARTING ANGLEE' + str(starting_angle))  
-	for angles in range(starting_angle, 360):
-	    initial_distance = laser_range[angles-1]
-	    if abs(initial_distance - laser_range[angles]) > threshold:
-	        opening_list.append(angles) 
-        for angles in range(0, starting_angle):
-	    initial_distance = laser_range[angles-1]
-	    if abs(initial_distance - laser_range[angles]) > threshold:
-	        opening_list.append(angles) 
-	return opening_list
+    	    initial_distance = laser_range[angles - 1]
+    	    if laser_range[angles] - initial_distance > threshold:
+    		    starting_angle = angles
+            break
+            
+    	rospy.loginfo('STARTING ANGLEE' + str(starting_angle))  
+    	for angles in range(starting_angle + 1, 360):
+    	    initial_distance = laser_range[angles-1]
+    	    if abs(initial_distance - laser_range[angles]) > threshold:
+    	        opening_list.append(angles) 
+            for angles in range(0, starting_angle):
+                initial_distance = laser_range[angles-1]
+                if abs(initial_distance - laser_range[angles]) > threshold:
+                    opening_list.append(angles) 
+    	return opening_list
 	
 
     def choose_best_opening(opening_list):
-	if len(opening_list) == 2:
-	    return abs((opening_list[0] - opening_list[1])//2 + opening_list[0])
-	else: 
-	    list_of_potential_angles = []
-	    for x in range(0, len(opening_list)-2, 2):
-		angle = abs((opening_list[x] - opening_list[x+1])//2 + opening_list[x])
-		if angle > 180:
-		    angle = angle - 360
-	        list_of_potential_angles.append(abs((opening_list[x] - opening_list[x+1])//2 + opening_list[x]))
-	    
-	    lis_temp = list_of_potential_angles
-	    map(abs(), lis_temp)
-	    minimum = min(lis_temp)
-	    target_index = lis_temp.index(minimum)
-
-	    lr2i =  list_of_potential_angles[target_index]
-
-
-	return lr2i
-    rospy.loginfo('HEREEE' + str(identify_openings(laser_range)))    
-    lr2i = 50
+        if len(opening_list) == 2:
+    	    return abs((opening_list[0] - opening_list[1])//2 + opening_list[0])
+    	else:
+            list_of_potential_angles = []
+            
+            for x in range(0, len(opening_list) - 2, 2):
+    		    angle = abs((opening_list[x] - opening_list[x+1])//2 + opening_list[x])
+    		    if angle > 180:
+		            angle = angle - 360
+	            list_of_potential_angles.append(abs((opening_list[x] - opening_list[x+1])//2 + opening_list[x]))
+    	    
+    	    lis_temp = list_of_potential_angles
+    	    map(abs, lis_temp)
+    	    minimum = min(lis_temp)
+    	    target_index = lis_temp.index(minimum)
+    
+    	    lr2i =  list_of_potential_angles[target_index]
+            return lr2i
+    opening = identify_openings(laser_range)
+    lr2i = choose_best_opening(opening)
+    rospy.loginfo('LIST OF OPENINGs' + str(opening))  
     if lr2i > 180:
-	lr2i = lr2i - 360
+        lr2i = lr2i - 360
     try:
         rospy.loginfo(['Picked direction: ' + str(lr2i) + ' ' + str(laser_range[lr2i]) + ' m'])
     # rotate to that direction
