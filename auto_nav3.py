@@ -21,7 +21,7 @@ occdata = np.array([])
 yaw = 0.0
 rotate_speed = 0.22
 linear_speed = 0.22
-stop_distance = 0.2
+stop_distance = 1
 occ_bins = [-1, 0, 100, 101]
 front_angle = 30
 front_angles = range(-front_angle,front_angle+1,1)
@@ -238,15 +238,15 @@ def pick_direction():
 
     def choose_best_opening(opening_list):
         if len(opening_list) == 2:
-    	    return abs((opening_list[0] - opening_list[1])//2 + opening_list[0])
+    	    return (abs(opening_list[0] - opening_list[1])//2 + opening_list[0])
     	else:
             list_of_potential_angles = []
             
             for x in range(0, len(opening_list) - 2, 2):
-    		    angle = abs((opening_list[x] - opening_list[x+1])//2 + opening_list[x])
+    		    angle = (abs(opening_list[x] - opening_list[x+1])//2 + opening_list[x])
     		    if angle > 180:
 		            angle = angle - 360
-	            list_of_potential_angles.append(abs((opening_list[x] - opening_list[x+1])//2 + opening_list[x]))
+	            list_of_potential_angles.append(abs(opening_list[x] - opening_list[x+1])//2 + opening_list[x])
     	    
     	    lis_temp = list_of_potential_angles
     	    map(abs, lis_temp)
