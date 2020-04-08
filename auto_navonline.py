@@ -161,7 +161,7 @@ def direction(maps, distance_differ, maps2):
             k += 1
             mod = 0
         if k >= len(distance_differ):
-            k = 'ERROR'
+            k = 0
             clock = False
     return beta, k, alpha, value
 
