@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+# find opening, goes to opening.
 import rospy
 from nav_msgs.msg import Odometry
 from nav_msgs.msg import OccupancyGrid
@@ -21,9 +21,9 @@ occdata = np.array([])
 yaw = 0.0
 rotate_speed = 0.22
 linear_speed = 0.22
-stop_distance = 1
+stop_distance = 0.75
 occ_bins = [-1, 0, 100, 101]
-front_angle = 30
+front_angle = 10
 front_angles = range(-front_angle,front_angle+1,1)
 im2arr = []
 
@@ -376,7 +376,7 @@ def mover():
             lri[0] = []
 
         # if the list is not empty
-        if(len(lri[0])>0):
+        if(len(lri[0])>0) and len(laser_range) > 0:
             rospy.loginfo(['Stop!'])
             # find direction with the largest distance from the Lidar
             # rotate to that direction
