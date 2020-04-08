@@ -40,7 +40,7 @@ turtlebot = numpy.zeros((30, 30))
 init = [2500, 2500]
 
 def alpha (distance_differ, k):
-    chord = 0.5
+    chord = 0.4
     d = distance_differ[k]
     angle = 2 * 180 / math.pi * math.atan(chord/2/d)
     return int(angle) + 1
