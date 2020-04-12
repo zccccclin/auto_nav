@@ -40,7 +40,7 @@ turtlebot = numpy.zeros((30, 30))
 init = [2500, 2500]
 
 def alpha (distance_differ, k):
-    chord = 0.25
+    chord = 0.5
     d = distance_differ[k]
     angle = 2 * 180 / math.pi * math.atan(chord/2/d)
     return int(angle) + 1
@@ -252,79 +252,7 @@ def medium(mod, maps,maps2, selection , value , distance_differ, k):
                 flag2 = False
     return counter,controller
 
-def slam(map_matrix, maps, init, odometryx, odometryy, odometryw):
-    global time, positionx , positiony, robotx, roboty, obstacle
-    index = init
-    theta = 0 
-    space = 0
-    robot = 0 
-    n = 2
-    theta = odometryw[-1] 
-    x = odometryx [-1] 
-    y = odometryy[-1]
-    for i in range(len(maps)/n):
-        i = i*n
-        maps_value = maps.values()[i]
-        if maps_value > 0 and maps_value < 5 and time % 10 == 0:
-            index = copy.copy(init)
-            index[0] += int(x *100 + maps_value *100* math.cos((theta+i)*math.pi/180))
-            index[1] += int(y*100 + maps_value *100* math.sin((theta+i) *math.pi/180))
-            if map_matrix [index[0]][index[1]] != 2 and map_matrix[index[0]][index[1]] != 3: 
-                map_matrix [index[0]][index[1]] = 1
-                print "value %d" % (int(maps_value* 100))
-            for j in range(1,int(maps_value* 100-30)):
-                index = copy.copy(init)
-                index[0] += int (x*100 + (maps_value* 100-j)*math.cos((theta+i) *math.pi/180))
-                index[1] += int (y*100 + (maps_value* 100-j)*math.sin((theta+i) *math.pi/180))
-                if map_matrix [index[0]][index[1]] != 2 and map_matrix[index [0]][index[1]] != 3:
-                    map_matrix [index[0]][index [1]] = 0
-    space = math.sqrt( (x-positionx)*(x-positionx) + (y-positiony) *( y-positiony) )
-    robot = math.sqrt ( (x-robotx)*(x -robotx) + ( y-roboty)*( y-roboty) )
-    if time == 1 or robot > 0.3:
-        robotx = odometryx [-1]
-        roboty = odometryy[-1]
-        if space > 2:
-            positionx = odometryx [-1]
-            positiony = odometryy[-1]
-        for i in range(13):
-            for j in range(13):
-                index = copy.copy(init)
-                index[0]+=int( x*100+i *math.cos((theta )*math.pi/180)-j*math.sin((theta)*math.pi/ 180))
-                index[1]+=int( y*100 + i *math.sin( (theta)*math.pi/ 180)+ j*math.cos((theta) *math.pi /180))
-                if j == 0 and i >= 0:
-                    if space > 2 or time == 1:
-                        map_matrix[index[0]][index [1]] = 3
-                    elif map_matrix[index [0]][index[1]] != 2 and map_matrix[index[0]][index[1]] != 3:
-                        map_matrix[index[0]][index [1]] = 0
-                else:
-                    if space > 2 or time == 1:
-                        map_matrix[index[0]][index [1]] = 2
-                    elif map_matrix[index[0]][index[1]] != 2 and map_matrix[index [0]][index[1]] != 3:
-                        map_matrix[index[0]][index [1]] = 0
-                if j > 0:
-                    index = copy.copy(init)
-                    index[0]+=int(x* 100+i *math.cos ((theta)*math.pi/ 180)+ j* math.sin((theta)* math.pi/ 180) )
-                    index[1]+=int( y* 100+i *math.sin( (theta)*math.pi/ 180)-j*math.cos((theta)* math.pi/ 180))
-                    if space > 2 or time == 1:
-                        map_matrix[index[0]][index[1]] = 2
-                    elif map_matrix[index [0]][index[1]] != 2 and map_matrix[index [0]][index[1]] != 3 :
-                        map_matrix[index[0]][index [1]] = 0
-                if i > 0:
-                    index = copy.copy(init) 
-                    index[0]+=int(x* 100-i* math.cos ((theta)*math.pi/ 180)-j*math.sin ((theta)* math.pi/ 180))
-                    index[1]+=int(y* 100-i*math.sin(( theta) *math.pi/ 180)+ j*math.cos(( theta)* math.pi /180))
-                    if space > 2 or time == 1:
-                        map_matrix[index[0]][index [1]] = 2
-                    elif map_matrix[index [0]][index[1]] != 2 and map_matrix[index [0]][index[1]] != 3 :
-                        map_matrix[index[0]][index [1]] = 0
-                    index = copy.copy(init)
-                    index[0]+=int(x* 100-i*math.cos( (theta )*math.pi/ 180)+ j*math.sin((theta)* math.pi /180))
-                    index[1]+=int( y* 100-i* math.sin(( theta)*math.pi/ 180)-j*math.cos((theta)* math.pi/ 180))
-                    if space > 2 or time == 1:
-                        map_matrix[index[0]][index[1]] = 2
-                    elif map_matrix[index [0]][index[1]] != 2 and map_matrix[index [0]][index[1]] != 3 :
-                        map_matrix[index[0]][index [1]] = 0
-    return map_matrix
+
 
 def LiDAR(msg):
     global time , global_distance, global_mod, computation, odometryx, odometryy, odometryw, odometryz, x , y, w, z , a ,b, map_matrix, init
@@ -347,40 +275,11 @@ def LiDAR(msg):
         print '*'*5 + " Linear velocity = %.2f m/s , Angular velocity = %.2f rad/s" %(linear,angular) + '*'* 5
         w = numpy.sign(z)* round(float( 2*math.acos(w)* 180/ math.pi) , 2)
         print '*'*5 + "Odometry x = %.2f m , y = %.2f m, theta = %.2f degree" %(x-a, y-b, w)+'*'* 5+"\n "
-        odometryx = numpy.concatenate(( odometryx , [x-a]))
-        odometryy = numpy.concatenate(( odometryy, [y-b]))
-        odometryw = numpy.concatenate(( odometryw, [w] ))
-        odometryz = numpy.concatenate(( odometryz , [z])) 
-        map_matrix = slam( map_matrix, maps2, init, odometryx, odometryy,odometryw)
     elif cnt== 2:
         move.linear.x =0.0
         move.angular.z =0.0
         pub.publish(move)
-        X = []
-        Y = []
-        Green_X = []
-        Green_Y = []
-        Red_X = []
-        Red_Y = []
-        file_m = open("map.txt", "w")
-        for i in range(len(map_matrix)):
-            file_m.write(map_matrix[i])
-            for j in range(len (map_matrix)):
-                if map_matrix [i][j] == 1:
-                    X.append(i)
-                    Y.append(j)
-                elif map_matrix[i][j] == 3:
-                    Green_X.append(i)
-                    Green_Y.append(j)
-                elif map_matrix[i][j] == 2:
-                    Red_X.append(i)
-                    Red_Y.append(j)
-        mt.plot(X , Y, 'k.')
-        mt.plot( Red_X , Red_Y, 'r .')
-        mt.plot(Green_X , Green_Y, 'g .')
-        mt.plot( odometryx* 100+ 2500, odometryy*100+ 2500 ,' b-')
-        file_m.close()
-        mt.show()
+        
     pub.publish( move )
     
 def Position(msg):
