@@ -13,6 +13,12 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovariance
 from geometry_msgs.msg import PoseStamped
+
+from nav_msgs.msg import OccupancyGrid
+import cv2
+from sound_play.msg import SoundRequest
+from sound_play.libsoundplay import SoundClient
+
 global pub, move, cnt, time, free_time, global_distance, global_mod, x, y, a, b, w, z, flag, computation, odometry, positionx, positiony, robotx, roboty
 rospy.init_node('obstacle_avoidance',anonymous=True)
 pub=rospy.Publisher('/cmd_vel' ,Twist,queue_size=10)
@@ -39,8 +45,104 @@ map_matrix = numpy.full((5000, 5000), 0)
 turtlebot = numpy.zeros((30, 30))
 init = [2500, 2500]
 
+occdata = numpy.array([])
+occ_bins = [-1, 0, 100, 101]
+def get_occupancy(msg):
+    global occdata
+    global cnt
+
+    # create numpy array
+    msgdata = numpy.array(msg.data)
+    # compute histogram to identify percent of bins with -1
+    occ_counts = numpy.histogram(msgdata,occ_bins)
+    # calculate total number of bins
+    total_bins = msg.info.width * msg.info.height
+    # log the info
+    # rospy.loginfo('Unmapped: %i Unoccupied: %i Occupied: %i Total: %i', occ_counts[0][0], occ_counts[0][1], occ_counts[0][2], total_bins)
+
+    # make msgdata go from 0 instead of -1, reshape into 2D
+    oc2 = msgdata + 1
+    # reshape to 2D array using column order
+    occdata = numpy.uint8(oc2.reshape(msg.info.height,msg.info.width,order='F'))
+    
+    contourCheck = 1
+    if contourCheck :
+        if closure(occdata) :
+                # map is complete, so save current time into file
+            with open("maptime.txt", "w") as f:
+                f.write("done")
+            contourCheck = 0
+                # play a sound
+            soundhandle = SoundClient()
+            rospy.sleep(1)
+            soundhandle.stopAll()
+            soundhandle.play(SoundRequest.NEEDS_UNPLUGGING)
+            rospy.sleep(2)
+                # save the map
+            cv2.imwrite('mazemap.png',occdata)
+            cnt = 2
+            print("Map finished, Check your map at 'mapzemap.png'.")
+            
+
+def closure(mapdata):
+    # This function checks if mapdata contains a closed contour. The function
+    # assumes that the raw map data from SLAM has been modified so that
+    # -1 (unmapped) is now 0, and 0 (unoccupied) is now 1, and the occupied
+    # values go from 1 to 101.
+
+    # According to: https://stackoverflow.com/questions/17479606/detect-closed-contours?rq=1
+    # closed contours have larger areas than arc length, while open contours have larger
+    # arc length than area. But in my experience, open contours can have areas larger than
+    # the arc length, but closed contours tend to have areas much larger than the arc length
+    # So, we will check for contour closure by checking if any of the contours
+    # have areas that are more than 10 times larger than the arc length
+    # This value may need to be adjusted with more testing.
+    ALTHRESH = 10
+    # We will slightly fill in the contours to make them easier to detect
+    DILATE_PIXELS = 3
+
+    # assumes mapdata is uint8 and consists of 0 (unmapped), 1 (unoccupied),
+    # and other positive values up to 101 (occupied)
+    # so we will apply a threshold of 2 to create a binary image with the
+    # occupied pixels set to 255 and everything else is set to 0
+    # we will use OpenCV's threshold function for this
+    ret,img2 = cv2.threshold(mapdata,2,255,0)
+    # we will perform some erosion and dilation to fill out the contours a
+    # little bit
+    element = cv2.getStructuringElement(cv2.MORPH_CROSS,(DILATE_PIXELS,DILATE_PIXELS))
+    # img3 = cv2.erode(img2,element)
+    img4 = cv2.dilate(img2,element)
+    # use OpenCV's findContours function to identify contours
+    # OpenCV version 3 changed the number of return arguments, so we
+    # need to check the version of OpenCV installed so we know which argument
+    # to grab
+    fc = cv2.findContours(img4, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    (major, minor, _) = cv2.__version__.split(".")
+    if(major == '3'):
+        contours = fc[1]
+    else:
+        contours = fc[0]
+    # find number of contours returned
+    lc = len(contours)
+    # rospy.loginfo('# Contours: %s', str(lc))
+    # create array to compute ratio of area to arc length
+    cAL = numpy.zeros((lc,2))
+    for i in range(lc):
+        cAL[i,0] = cv2.contourArea(contours[i])
+        cAL[i,1] = cv2.arcLength(contours[i], True)
+
+    # closed contours tend to have a much higher area to arc length ratio,
+    # so if there are no contours with high ratios, we can safely say
+    # there are no closed contours
+    cALratio = cAL[:,0]/cAL[:,1]
+    # rospy.loginfo('Closure: %s', str(cALratio))
+    if numpy.any(cALratio > ALTHRESH):
+        return True
+    else:
+        return False
+
 def alpha (distance_differ, k):
-    chord = 0.5
+    chord = 0.25
     d = distance_differ[k]
     angle = 2 * 180 / math.pi * math.atan(chord/2/d)
     return int(angle) + 1
@@ -256,6 +358,7 @@ def medium(mod, maps,maps2, selection , value , distance_differ, k):
 
 def LiDAR(msg):
     global time , global_distance, global_mod, computation, odometryx, odometryy, odometryw, odometryz, x , y, w, z , a ,b, map_matrix, init
+    global cnt
     if cnt == 1:
         time += 1
         print '*'*5 + 'Time' + '*'* 5
@@ -266,6 +369,12 @@ def LiDAR(msg):
         maps, max_map, distance_differ = start(msg, 270, 91)
         maps2 = start2( msg , 181, 181)
         beta, k, alpha , value = direction (maps, distance_differ, maps2)
+        if k == 'ERROR':
+            move.linear.x = -0.5
+            move.angular.z = 0
+            pub.publish(move)
+            k = 0
+            beta, k, alpha , value = direction (maps, distance_differ, maps2)
         linear , angular = motion(beta , k, distance_differ, alpha)
         global_distance = value
         global_mod = numpy.sign(beta )*int(abs(beta )-angular*0.2*180/math.pi )
@@ -275,6 +384,7 @@ def LiDAR(msg):
         print '*'*5 + " Linear velocity = %.2f m/s , Angular velocity = %.2f rad/s" %(linear,angular) + '*'* 5
         w = numpy.sign(z)* round(float( 2*math.acos(w)* 180/ math.pi) , 2)
         print '*'*5 + "Odometry x = %.2f m , y = %.2f m, theta = %.2f degree" %(x-a, y-b, w)+'*'* 5+"\n "
+        
     elif cnt== 2:
         move.linear.x =0.0
         move.angular.z =0.0
@@ -295,9 +405,10 @@ class Publisher(threading.Thread):
     def run(self):
         osub=rospy.Subscriber('scan', LaserScan,LiDAR)
         sub1 =rospy.Subscriber("odom", Odometry, Position)
+        rospy.Subscriber('map', OccupancyGrid, get_occupancy)        
         rospy.spin( )
         
-if __name__=='__main__':
+if __name__=='__main__': 
     p=Publisher()
     p.start()
     while True: 
