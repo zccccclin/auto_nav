@@ -13,9 +13,9 @@ np.set_printoptions(precision=2)
 orbit = 0
 laser_sensors = {'w': 0, 'nw': 0, 'n': 0, 'ne': 0, 'e': 0}
 
-linear_vel = 0.2
-angular_vel = 0.6
-wall_distance = 0.5
+linear_vel = 0.1
+angular_vel = 0.4
+wall_distance = 0.4
 wall_distance_forward = 0.30
 wall_distance_side = 0.35
 
@@ -69,7 +69,7 @@ def log_info():
                   laser_sensors['ne'], laser_sensors['e'])
 
 
-def create_velocity_message(turn_left, turn_right, forward):
+def create_velocity_message(turn_left, turn_right, forward): #movement command
     angular = 0
     linear = 0
     if (turn_left):
@@ -84,7 +84,7 @@ def create_velocity_message(turn_left, turn_right, forward):
     return vel_msg
 
 
-def publish_velocity_message(vel_msg):
+def publish_velocity_message(vel_msg): #publish to robot
     vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
     vel_pub.publish(vel_msg)
 
@@ -92,9 +92,9 @@ def publish_velocity_message(vel_msg):
 def laser_callback(data):
     global orbit, laser_sensors
 
-    calculate_lasers_range(data)
+    calculate_lasers_range(data) #caculate direction distance in 5 directions: w nw n ne e
 
-    log_info()
+    log_info() 
 
     linear = 0
     angular = 0
@@ -102,10 +102,10 @@ def laser_callback(data):
     turn_left = False
     turn_right = False
 
-    if (orbit == 0):
-        if (laser_sensors['w'] < wall_distance_side):
+    if (orbit == 0): #check obstacle around and moveforward
+        if (laser_sensors['w'] < wall_distance_side): 
             orbit = left
-        elif (laser_sensors['e'] < wall_distance_side):
+        elif (laser_sensors['e'] < wall_distance_side): 
             orbit = right
         elif (laser_sensors['nw'] < wall_distance):
             orbit = going_left
@@ -174,7 +174,7 @@ def sonar_callback(data):
 
 
 def listeners():
-    rospy.Subscriber('scan', LaserScan,laser_callback)
+    rospy.Subscriber('scan', LaserScan,laser_callback) #subscribe scan data, run laser_callback function
     rospy.Subscriber('range', Range, sonar_callback)
     rospy.spin()
 
