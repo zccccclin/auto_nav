@@ -40,7 +40,7 @@ turtlebot = numpy.zeros((30, 30))
 init = [2500, 2500]
 
 def alpha (distance_differ, k):
-    chord = 0.4
+    chord = 0.3
     d = distance_differ[k]
     angle = 2 * 180 / math.pi * math.atan(chord/2/d)
     return int(angle) + 1
@@ -161,7 +161,7 @@ def direction(maps, distance_differ, maps2):
             k += 1
             mod = 0
         if k >= len(distance_differ):
-            k = 0
+            k = "ERROR"
             clock = False
     return beta, k, alpha, value
 
