@@ -13,6 +13,12 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovariance
 from geometry_msgs.msg import PoseStamped
+
+from nav_msgs.msg import OccupancyGrid
+import cv2
+from sound_play.msg import SoundRequest
+from sound_play.libsoundplay import SoundClient
+
 global pub, move, cnt, time, free_time, global_distance, global_mod, x, y, a, b, w, z, flag, computation, odometry, positionx, positiony, robotx, roboty
 rospy.init_node('obstacle_avoidance',anonymous=True)
 pub=rospy.Publisher('/cmd_vel' ,Twist,queue_size=10)
@@ -38,6 +44,102 @@ odometryz = numpy.array([])
 map_matrix = numpy.full((5000, 5000), 0)
 turtlebot = numpy.zeros((30, 30))
 init = [2500, 2500]
+
+occdata = numpy.array([])
+occ_bins = [-1, 0, 100, 101]
+def get_occupancy(msg):
+    global occdata
+    global cnt
+
+    # create numpy array
+    msgdata = numpy.array(msg.data)
+    # compute histogram to identify percent of bins with -1
+    occ_counts = numpy.histogram(msgdata,occ_bins)
+    # calculate total number of bins
+    total_bins = msg.info.width * msg.info.height
+    # log the info
+    # rospy.loginfo('Unmapped: %i Unoccupied: %i Occupied: %i Total: %i', occ_counts[0][0], occ_counts[0][1], occ_counts[0][2], total_bins)
+
+    # make msgdata go from 0 instead of -1, reshape into 2D
+    oc2 = msgdata + 1
+    # reshape to 2D array using column order
+    occdata = numpy.uint8(oc2.reshape(msg.info.height,msg.info.width,order='F'))
+    
+    contourCheck = 1
+    if contourCheck :
+        if closure(occdata) :
+                # map is complete, so save current time into file
+            with open("maptime.txt", "w") as f:
+                f.write("done")
+            contourCheck = 0
+                # play a sound
+            soundhandle = SoundClient()
+            rospy.sleep(1)
+            soundhandle.stopAll()
+            soundhandle.play(SoundRequest.NEEDS_UNPLUGGING)
+            rospy.sleep(2)
+                # save the map
+            cv2.imwrite('mazemap.png',occdata)
+            cnt = 2
+            print("Map finished, Check your map at 'mapzemap.png'.")
+            
+
+def closure(mapdata):
+    # This function checks if mapdata contains a closed contour. The function
+    # assumes that the raw map data from SLAM has been modified so that
+    # -1 (unmapped) is now 0, and 0 (unoccupied) is now 1, and the occupied
+    # values go from 1 to 101.
+
+    # According to: https://stackoverflow.com/questions/17479606/detect-closed-contours?rq=1
+    # closed contours have larger areas than arc length, while open contours have larger
+    # arc length than area. But in my experience, open contours can have areas larger than
+    # the arc length, but closed contours tend to have areas much larger than the arc length
+    # So, we will check for contour closure by checking if any of the contours
+    # have areas that are more than 10 times larger than the arc length
+    # This value may need to be adjusted with more testing.
+    ALTHRESH = 10
+    # We will slightly fill in the contours to make them easier to detect
+    DILATE_PIXELS = 3
+
+    # assumes mapdata is uint8 and consists of 0 (unmapped), 1 (unoccupied),
+    # and other positive values up to 101 (occupied)
+    # so we will apply a threshold of 2 to create a binary image with the
+    # occupied pixels set to 255 and everything else is set to 0
+    # we will use OpenCV's threshold function for this
+    ret,img2 = cv2.threshold(mapdata,2,255,0)
+    # we will perform some erosion and dilation to fill out the contours a
+    # little bit
+    element = cv2.getStructuringElement(cv2.MORPH_CROSS,(DILATE_PIXELS,DILATE_PIXELS))
+    # img3 = cv2.erode(img2,element)
+    img4 = cv2.dilate(img2,element)
+    # use OpenCV's findContours function to identify contours
+    # OpenCV version 3 changed the number of return arguments, so we
+    # need to check the version of OpenCV installed so we know which argument
+    # to grab
+    fc = cv2.findContours(img4, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    (major, minor, _) = cv2.__version__.split(".")
+    if(major == '3'):
+        contours = fc[1]
+    else:
+        contours = fc[0]
+    # find number of contours returned
+    lc = len(contours)
+    # rospy.loginfo('# Contours: %s', str(lc))
+    # create array to compute ratio of area to arc length
+    cAL = numpy.zeros((lc,2))
+    for i in range(lc):
+        cAL[i,0] = cv2.contourArea(contours[i])
+        cAL[i,1] = cv2.arcLength(contours[i], True)
+
+    # closed contours tend to have a much higher area to arc length ratio,
+    # so if there are no contours with high ratios, we can safely say
+    # there are no closed contours
+    cALratio = cAL[:,0]/cAL[:,1]
+    # rospy.loginfo('Closure: %s', str(cALratio))
+    if numpy.any(cALratio > ALTHRESH):
+        return True
+    else:
+        return False
 
 def alpha (distance_differ, k):
     chord = 0.25
@@ -252,82 +354,11 @@ def medium(mod, maps,maps2, selection , value , distance_differ, k):
                 flag2 = False
     return counter,controller
 
-def slam(map_matrix, maps, init, odometryx, odometryy, odometryw):
-    global time, positionx , positiony, robotx, roboty, obstacle
-    index = init
-    theta = 0 
-    space = 0
-    robot = 0 
-    n = 2
-    theta = odometryw[-1] 
-    x = odometryx [-1] 
-    y = odometryy[-1]
-    for i in range(len(maps)/n):
-        i = i*n
-        maps_value = maps.values()[i]
-        if maps_value > 0 and maps_value < 5 and time % 10 == 0:
-            index = copy.copy(init)
-            index[0] += int(x *100 + maps_value *100* math.cos((theta+i)*math.pi/180))
-            index[1] += int(y*100 + maps_value *100* math.sin((theta+i) *math.pi/180))
-            if map_matrix [index[0]][index[1]] != 2 and map_matrix[index[0]][index[1]] != 3: 
-                map_matrix [index[0]][index[1]] = 1
-                print "value %d" % (int(maps_value* 100))
-            for j in range(1,int(maps_value* 100-30)):
-                index = copy.copy(init)
-                index[0] += int (x*100 + (maps_value* 100-j)*math.cos((theta+i) *math.pi/180))
-                index[1] += int (y*100 + (maps_value* 100-j)*math.sin((theta+i) *math.pi/180))
-                if map_matrix [index[0]][index[1]] != 2 and map_matrix[index [0]][index[1]] != 3:
-                    map_matrix [index[0]][index [1]] = 0
-    space = math.sqrt( (x-positionx)*(x-positionx) + (y-positiony) *( y-positiony) )
-    robot = math.sqrt ( (x-robotx)*(x -robotx) + ( y-roboty)*( y-roboty) )
-    if time == 1 or robot > 0.3:
-        robotx = odometryx [-1]
-        roboty = odometryy[-1]
-        if space > 2:
-            positionx = odometryx [-1]
-            positiony = odometryy[-1]
-        for i in range(13):
-            for j in range(13):
-                index = copy.copy(init)
-                index[0]+=int( x*100+i *math.cos((theta )*math.pi/180)-j*math.sin((theta)*math.pi/ 180))
-                index[1]+=int( y*100 + i *math.sin( (theta)*math.pi/ 180)+ j*math.cos((theta) *math.pi /180))
-                if j == 0 and i >= 0:
-                    if space > 2 or time == 1:
-                        map_matrix[index[0]][index [1]] = 3
-                    elif map_matrix[index [0]][index[1]] != 2 and map_matrix[index[0]][index[1]] != 3:
-                        map_matrix[index[0]][index [1]] = 0
-                else:
-                    if space > 2 or time == 1:
-                        map_matrix[index[0]][index [1]] = 2
-                    elif map_matrix[index[0]][index[1]] != 2 and map_matrix[index [0]][index[1]] != 3:
-                        map_matrix[index[0]][index [1]] = 0
-                if j > 0:
-                    index = copy.copy(init)
-                    index[0]+=int(x* 100+i *math.cos ((theta)*math.pi/ 180)+ j* math.sin((theta)* math.pi/ 180) )
-                    index[1]+=int( y* 100+i *math.sin( (theta)*math.pi/ 180)-j*math.cos((theta)* math.pi/ 180))
-                    if space > 2 or time == 1:
-                        map_matrix[index[0]][index[1]] = 2
-                    elif map_matrix[index [0]][index[1]] != 2 and map_matrix[index [0]][index[1]] != 3 :
-                        map_matrix[index[0]][index [1]] = 0
-                if i > 0:
-                    index = copy.copy(init) 
-                    index[0]+=int(x* 100-i* math.cos ((theta)*math.pi/ 180)-j*math.sin ((theta)* math.pi/ 180))
-                    index[1]+=int(y* 100-i*math.sin(( theta) *math.pi/ 180)+ j*math.cos(( theta)* math.pi /180))
-                    if space > 2 or time == 1:
-                        map_matrix[index[0]][index [1]] = 2
-                    elif map_matrix[index [0]][index[1]] != 2 and map_matrix[index [0]][index[1]] != 3 :
-                        map_matrix[index[0]][index [1]] = 0
-                    index = copy.copy(init)
-                    index[0]+=int(x* 100-i*math.cos( (theta )*math.pi/ 180)+ j*math.sin((theta)* math.pi /180))
-                    index[1]+=int( y* 100-i* math.sin(( theta)*math.pi/ 180)-j*math.cos((theta)* math.pi/ 180))
-                    if space > 2 or time == 1:
-                        map_matrix[index[0]][index[1]] = 2
-                    elif map_matrix[index [0]][index[1]] != 2 and map_matrix[index [0]][index[1]] != 3 :
-                        map_matrix[index[0]][index [1]] = 0
-    return map_matrix
+
 
 def LiDAR(msg):
     global time , global_distance, global_mod, computation, odometryx, odometryy, odometryw, odometryz, x , y, w, z , a ,b, map_matrix, init
+    global cnt
     if cnt == 1:
         time += 1
         print '*'*5 + 'Time' + '*'* 5
@@ -338,6 +369,12 @@ def LiDAR(msg):
         maps, max_map, distance_differ = start(msg, 270, 91)
         maps2 = start2( msg , 181, 181)
         beta, k, alpha , value = direction (maps, distance_differ, maps2)
+        if k == 'ERROR':
+            move.linear.x = -0.5
+            move.angular.z = 0
+            pub.publish(move)
+            k = 0
+            beta, k, alpha , value = direction (maps, distance_differ, maps2)
         linear , angular = motion(beta , k, distance_differ, alpha)
         global_distance = value
         global_mod = numpy.sign(beta )*int(abs(beta )-angular*0.2*180/math.pi )
@@ -347,40 +384,12 @@ def LiDAR(msg):
         print '*'*5 + " Linear velocity = %.2f m/s , Angular velocity = %.2f rad/s" %(linear,angular) + '*'* 5
         w = numpy.sign(z)* round(float( 2*math.acos(w)* 180/ math.pi) , 2)
         print '*'*5 + "Odometry x = %.2f m , y = %.2f m, theta = %.2f degree" %(x-a, y-b, w)+'*'* 5+"\n "
-        odometryx = numpy.concatenate(( odometryx , [x-a]))
-        odometryy = numpy.concatenate(( odometryy, [y-b]))
-        odometryw = numpy.concatenate(( odometryw, [w] ))
-        odometryz = numpy.concatenate(( odometryz , [z])) 
-        map_matrix = slam( map_matrix, maps2, init, odometryx, odometryy,odometryw)
+        
     elif cnt== 2:
         move.linear.x =0.0
         move.angular.z =0.0
         pub.publish(move)
-        X = []
-        Y = []
-        Green_X = []
-        Green_Y = []
-        Red_X = []
-        Red_Y = []
-        file_m = open("map.txt", "w")
-        for i in range(len(map_matrix)):
-            file_m.write(map_matrix[i])
-            for j in range(len (map_matrix)):
-                if map_matrix [i][j] == 1:
-                    X.append(i)
-                    Y.append(j)
-                elif map_matrix[i][j] == 3:
-                    Green_X.append(i)
-                    Green_Y.append(j)
-                elif map_matrix[i][j] == 2:
-                    Red_X.append(i)
-                    Red_Y.append(j)
-        mt.plot(X , Y, 'k.')
-        mt.plot( Red_X , Red_Y, 'r .')
-        mt.plot(Green_X , Green_Y, 'g .')
-        mt.plot( odometryx* 100+ 2500, odometryy*100+ 2500 ,' b-')
-        file_m.close()
-        mt.show()
+        
     pub.publish( move )
     
 def Position(msg):
@@ -396,9 +405,10 @@ class Publisher(threading.Thread):
     def run(self):
         osub=rospy.Subscriber('scan', LaserScan,LiDAR)
         sub1 =rospy.Subscriber("odom", Odometry, Position)
+        rospy.Subscriber('map', OccupancyGrid, get_occupancy)        
         rospy.spin( )
         
-if __name__=='__main__':
+if __name__=='__main__': 
     p=Publisher()
     p.start()
     while True: 
