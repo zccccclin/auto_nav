@@ -217,28 +217,31 @@ def pick_direction():
 #Part to avoid obstacles
     def identify_openings(laser_range): #return a dict of potential openings with its distances
         opening_list = [] # will make [[30, 60], [120, 150]] (means there's an opening between angle 30 and 60, and angle 120 and 150
-    	starting_angle = 0
+        starting_angle = 0
         for angles in range(len(laser_range)):
-    	    initial_distance = laser_range[angles - 1]
-    	    if laser_range[angles] - initial_distance > threshold:
-    		    starting_angle = angles
-            break
-            
-    	rospy.loginfo('STARTING ANGLEE' + str(starting_angle))  
-    	for angles in range(starting_angle + 1, 360):
-    	    initial_distance = laser_range[angles-1]
-    	    if abs(initial_distance - laser_range[angles]) > threshold:
-    	        opening_list.append(angles) 
-            for angles in range(0, starting_angle):
-                initial_distance = laser_range[angles-1]
-                if abs(initial_distance - laser_range[angles]) > threshold:
-                    opening_list.append(angles) 
-    	return opening_list
+            initial_distance = laser_range[angles - 1]
+            if laser_range[angles] - initial_distance > threshold:
+                starting_angle = angles
+                break
+                
+        rospy.loginfo('STARTING ANGLEE' + str(starting_angle))  
+        for angles in range(starting_angle, 360):
+            initial_distance = laser_range[angles-1]
+            if abs(initial_distance - laser_range[angles]) > threshold:
+                opening_list.append(angles) 
+        for angles in range(0, starting_angle):
+            initial_distance = laser_range[angles-1]
+            if abs(initial_distance - laser_range[angles]) > threshold:
+                opening_list.append(angles) 
+        return opening_list
 	
 
     def choose_best_opening(opening_list):
-        if len(opening_list) == 2:
+        if opening_list == []:
+            return 0
+        elif len(opening_list) == 2:
     	    return (abs(opening_list[0] - opening_list[1])//2 + opening_list[0])
+        
     	else:
             list_of_potential_angles = []
             
@@ -363,8 +366,12 @@ def mover():
 
     # find direction with the largest distance from the Lidar,
     # rotate to that direction, and start moving
-
-    pick_direction()
+    pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
+    twist = Twist()
+    twist.linear.x = 1.0
+    twist.angular.z = 0.0
+    time.sleep(1)
+    pub.publish(twist)
 
     while not rospy.is_shutdown():
         if laser_range.size != 0:
