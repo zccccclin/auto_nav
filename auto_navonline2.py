@@ -97,7 +97,7 @@ def closure(mapdata):
     # So, we will check for contour closure by checking if any of the contours
     # have areas that are more than 10 times larger than the arc length
     # This value may need to be adjusted with more testing.
-    ALTHRESH = 10
+    ALTHRESH = 8
     # We will slightly fill in the contours to make them easier to detect
     DILATE_PIXELS = 3
 
@@ -142,7 +142,7 @@ def closure(mapdata):
         return False
 
 def alpha (distance_differ, k):
-    chord = 0.25
+    chord = 0.35
     d = distance_differ[k]
     angle = 2 * 180 / math.pi * math.atan(chord/2/d)
     return int(angle) + 1
