@@ -135,14 +135,14 @@ def closure(mapdata):
     # so if there are no contours with high ratios, we can safely say
     # there are no closed contours
     cALratio = cAL[:,0]/cAL[:,1]
-    # rospy.loginfo('Closure: %s', str(cALratio))
+    rospy.loginfo('Closure: %s', str(cALratio))
     if numpy.any(cALratio > ALTHRESH):
         return True
     else:
         return False
 
 def alpha (distance_differ, k):
-    chord = 0.35
+    chord = 0.3
     d = distance_differ[k]
     angle = 2 * 180 / math.pi * math.atan(chord/2/d)
     return int(angle) + 1
