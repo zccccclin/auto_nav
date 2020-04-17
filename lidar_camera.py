@@ -1,11 +1,8 @@
 import cv2
 import numpy as np
-from PCA9685 import PCA9685
+#import tuertlebot packages??
 
-
-pwm = PCA9685(0x40, debug=False)
-pwm.setPWMFreq(50)
-pwm.setServoPosition(0, 90)
+#initiate turtlebot??
 
 cap = cv2.VideoCapture(0)
 
