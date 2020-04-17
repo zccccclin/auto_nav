@@ -17,7 +17,8 @@ rows, cols, _ = frame.shape
 
 x_medium = int(cols / 2)
 center = int(cols / 2)
-position = 90 # degrees
+#insert Turtlebot initial position
+#turtlebot_position = 90         #assume turtlebot initial position is 90 degrees, facing the front
 
 while True:
     _, frame = cap.read()
@@ -46,16 +47,14 @@ while True:
     if key == 27:
         break
 
-    # Move servo motor
+    # Rotate turtlebot
 
     if x_medium < center -30:
-        position += 1.5
+    #    turtlebot_position += 1.5
     elif x_medium > center + 30:
-        position -= 1.5
+    #    turtlebot_position -= 1.5
 
-    pwm.setServoPosition(0, position)
-
-    
+    #command to rotate turtlebot based on turtlebot_position
 
 cap.release()
 
