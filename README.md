@@ -14,6 +14,8 @@ Turtlebot3 burger with rasberry pi 3B+:
 Install Linux based http://emanual.robotis.com/docs/en/platform/turtlebot3/raspberry_pi_3_setup/#install-linux-based-on-raspbian
 
 
+
+                                                       Folder navigation guide
 There are 3 specific folders for three tasks that we went through during the module.
 
 /Lab 
