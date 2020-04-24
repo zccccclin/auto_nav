@@ -47,7 +47,8 @@ init = [2500, 2500]
 
 occdata = numpy.array([])
 occ_bins = [-1, 0, 100, 101]
-def get_occupancy(msg):
+
+def get_occupancy(msg):  #This function gets the occupancy data and pumps it to closure function to check if the map is complete
     global occdata
     global cnt
 
@@ -142,11 +143,14 @@ def closure(mapdata):
         return False
 
 def alpha (distance_differ, k):
-    chord = 0.3
+    #function that returns the suitable angle for the turtle to turn in order to clear the corner without hitting the wall
+    chord = 0.3   # the diameter of the robot, in turn changes the clearance away from wall
     d = distance_differ[k]
     angle = 2 * 180 / math.pi * math.atan(chord/2/d)
     return int(angle) + 1
+
 def motion(mod,k,distance_differ,alpha):
+    #function that takes in the distance datas and robot position data to return the required linear and angular velocity
     global flag
     distance = float(distance_differ[k])
     linear = round( 0.26-0.26* math.exp(-1* (distance -0.3)) ,2)
@@ -161,6 +165,8 @@ def motion(mod,k,distance_differ,alpha):
             angular = 0.4
     return linear,angular
 
+
+#The two start function scans all the required degrees (0 to 180) to record the distance data and stores them in lists. The data is more detailed in the design document
 def start2(msg , x, y):
     angle = range(x,360) + range(0,y)
     maps = {}
@@ -205,6 +211,7 @@ def start(msg, x , y):
     return maps, max_map, distance_differ
 
 def direction(maps, distance_differ, maps2):
+    #This function takes in the map generated from the distance datas and returns the suitable direction for the robot to head towards
     global global_distance , global_mod
     angle = range(270,360) + range(0,91)
     mod = 0 
@@ -268,6 +275,7 @@ def direction(maps, distance_differ, maps2):
     return beta, k, alpha, value
 
 def control(maps2, distance_differ, mod, k):
+    # The function checks for free spaces aroudn the walls
     angle = range(181,360) + range(0,181)
     point = 0
     z = len(distance_differ)-1
